@@ -12,7 +12,7 @@ class Ingredient(models.Model):
         decimal_places=2,
         null=True
     )
-    unit = models.CharField(
+    measurement_unit = models.CharField(
         'Единица измерения',
         max_length=10
     )
