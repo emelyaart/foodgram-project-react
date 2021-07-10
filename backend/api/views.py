@@ -1,7 +1,7 @@
 from rest_framework import viewsets, filters
 from rest_framework.pagination import PageNumberPagination
 
-from .models import Tag, Ingredient
+from .models import Recipe, Tag, Ingredient
 from .serializers import TagSerializer, IngridientSerializer
 from .permissions import IsStaffOrReadOnly
 
@@ -22,3 +22,11 @@ class TagsViewSet(BaseTagsAndIngridientViewSet):
 class IngridientsViewSet(BaseTagsAndIngridientViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngridientSerializer
+
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = 
+    pagination_class = PageNumberPagination
+    filter_backends = [filters.SearchFilter]
+    lookup_field = 'title'
