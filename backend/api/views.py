@@ -1,32 +1,42 @@
-from rest_framework import viewsets, filters
-from rest_framework.pagination import PageNumberPagination
+from rest_framework import viewsets, mixins
+from djoser.views import UserViewSet
 
 from .models import Recipe, Tag, Ingredient
-from .serializers import TagSerializer, IngridientSerializer
+from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer
 from .permissions import IsStaffOrReadOnly
+from .filters import IngredientSearchFilter
+from .paginations import LimitPageNumberPagination
 
 
-class BaseTagsAndIngridientViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsStaffOrReadOnly]
-    pagination_class = PageNumberPagination
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['title']
-
-
-class TagsViewSet(BaseTagsAndIngridientViewSet):
+class TagsViewSet(mixins.ListModelMixin,
+                  mixins.RetrieveModelMixin,
+                  viewsets.GenericViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    lookup_field = 'slug'
+    permission_classes = [IsStaffOrReadOnly]
 
 
-class IngridientsViewSet(BaseTagsAndIngridientViewSet):
+class IngredientsViewSet(mixins.ListModelMixin,
+                         mixins.RetrieveModelMixin,
+                         viewsets.GenericViewSet):
     queryset = Ingredient.objects.all()
-    serializer_class = IngridientSerializer
+    serializer_class = IngredientSerializer
+    permission_classes = [IsStaffOrReadOnly]
+    filter_backends = [IngredientSearchFilter]
+    search_fields = ['^name']
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = 
-    pagination_class = PageNumberPagination
-    filter_backends = [filters.SearchFilter]
-    lookup_field = 'title'
+    serializer_class = RecipeSerializer
+    pagination_class = LimitPageNumberPagination
+
+    def perform_create(self, serializer):
+        serializer.save(
+            author=self.request.user
+        )
+        return serializer
+
+
+class CustomUserViewSet(UserViewSet):
+    pagination_class = LimitPageNumberPagination
