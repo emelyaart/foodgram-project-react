@@ -3,8 +3,8 @@ from djoser.views import UserViewSet
 
 from .models import Recipe, Tag, Ingredient
 from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer
-from .permissions import IsStaffOrReadOnly
-from .filters import IngredientSearchFilter
+from .permissions import IsAuthorOrReadOnly, IsStaffOrReadOnly
+from .filters import IngredientSearchFilter, TagFilter
 from .paginations import LimitPageNumberPagination
 
 
@@ -30,6 +30,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     pagination_class = LimitPageNumberPagination
+    filter_class = TagFilter
+    permission_classes = [IsAuthorOrReadOnly]
 
     def perform_create(self, serializer):
         serializer.save(
