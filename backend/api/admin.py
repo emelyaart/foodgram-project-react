@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Ingredient, Recipe, Tag
+from .models import Favorite, Ingredient, Recipe, Tag
 
 
 class IngredientAmountInline(admin.TabularInline):
@@ -16,3 +16,8 @@ class TagAdmin(admin.ModelAdmin):
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ['name', 'author']
     inlines = [IngredientAmountInline]
+
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    pass

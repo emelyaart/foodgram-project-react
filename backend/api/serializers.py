@@ -3,7 +3,8 @@ from rest_framework import serializers
 
 from users.models import CustomUser
 
-from .models import Ingredient, IngredientAmount, Recipe, Tag
+from .models import (Ingredient, IngredientAmount, Recipe, Tag,
+                     Favorite)
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -46,12 +47,17 @@ class RecipeSerializer(serializers.ModelSerializer):
         many=True,
         read_only=True
     )
+    is_favorited = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
-        fields = ('id', 'tags', 'author', 'ingredients', 'name',
-                  'image', 'text', 'ingredients', 'cooking_time')
+        fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
+                  'name', 'image', 'text', 'cooking_time')
         depth = 1
+
+    def get_is_favorited(self, obj):
+        user = self.context.get('request').user
+        return Favorite.objects.filter(user=user, recipe=obj).exists()
 
     def create(self, validated_data):
         image = validated_data.pop('image')
@@ -59,8 +65,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         data = self.context.get('request').data
         ingredients_data = data.get('ingredients')
         tags_data = data.get('tags')
+
         for tag_id in tags_data:
             recipe.tags.add(Tag.objects.get(pk=tag_id))
+
         for ingredient in ingredients_data:
             ingredient_amount_obj = IngredientAmount.objects.create(
                 recipe=recipe,
@@ -68,6 +76,7 @@ class RecipeSerializer(serializers.ModelSerializer):
                 amount=ingredient.get('amount')
             )
             ingredient_amount_obj.save()
+
         return recipe
 
     def update(self, instance, validated_data):
@@ -75,7 +84,13 @@ class RecipeSerializer(serializers.ModelSerializer):
         instance.image = validated_data.get('image', instance.image)
         instance.name = validated_data.get('name', instance.name)
         instance.text = validated_data.get('text', instance.text)
+        instance.tags.clear()
         IngredientAmount.objects.filter(recipe=instance).all().delete()
+        tags_data = data.get('tags')
+
+        for tag_id in tags_data:
+            instance.tags.add(Tag.objects.get(pk=tag_id))
+
         for ingredient in data.get('ingredients'):
             ingredient_amount_obj = IngredientAmount.objects.create(
                 recipe=instance,
@@ -83,4 +98,5 @@ class RecipeSerializer(serializers.ModelSerializer):
                 amount=ingredient.get('amount')
             )
             ingredient_amount_obj.save()
+
         return instance
