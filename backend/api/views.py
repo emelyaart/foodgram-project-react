@@ -1,13 +1,14 @@
-from django.db.models.expressions import OuterRef
 from rest_framework import viewsets, mixins, status
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from djoser.views import UserViewSet
 from django.db.models import OuterRef, Exists
 
-from .models import Cart, Favorite, Recipe, Tag, Ingredient
-from .serializers import (TagSerializer,
-                          IngredientSerializer, RecipeSerializer)
+from .models import Cart, Favorite, Recipe, Subscribe, Tag, Ingredient, User
+from .serializers import (SubscribeSerializer, TagSerializer,
+                          IngredientSerializer, RecipeSerializer,
+                          RecipeMinifiedSerializer)
 from .permissions import IsAuthorOrReadOnly, IsStaffOrReadOnly
 from .filters import IngredientSearchFilter, TagFilter
 from .paginations import LimitPageNumberPagination
@@ -36,7 +37,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     pagination_class = LimitPageNumberPagination
     filter_class = TagFilter
-    permission_classes = [IsAuthorOrReadOnly]
+    permission_classes = [IsAuthorOrReadOnly, IsStaffOrReadOnly]
 
     def perform_create(self, serializer):
         serializer.save(
@@ -46,34 +47,40 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+
         if self.request.GET.get('is_favorited'):
             return self.filter_obj(Favorite, user)
         elif self.request.GET.get('is_in_shopping_cart'):
             return self.filter_obj(Cart, user)
+
         return Recipe.objects.all()
 
     @action(methods=['get'], detail=True)
     def favorite(self, request, pk=None):
         recipe = Recipe.objects.get(pk=pk)
         user = request.user
+
         return self.add_obj(Favorite, user, recipe)
 
     @favorite.mapping.delete
     def del_favorite(self, request, pk=None):
         user = request.user
         recipe = self.get_object()
+
         return self.delete_obj(Favorite, user, recipe)
 
     @action(methods=['get'], detail=True)
     def shopping_cart(self, request, pk=None):
         user = request.user
         recipe = self.get_object()
+
         return self.add_obj(Cart, user, recipe)
 
     @shopping_cart.mapping.delete
     def del_shopping_cart(self, request, pk=None):
         user = request.user
         recipe = self.get_object()
+
         return self.delete_obj(Cart, user, recipe)
 
     def add_obj(self, model, user, recipe):
@@ -81,21 +88,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response({
                 'errors': 'Рецепт уже добавлен в список'
             }, status=status.HTTP_400_BAD_REQUEST)
+
         obj = model.objects.create(
             user=user, recipe=recipe
         )
         obj.save()
-        return Response({
-            'id': obj.id,
-            'name': obj.recipe.name,
-            'image': obj.recipe.image.url,
-            'cooking_time': obj.recipe.cooking_time
-        }, status=status.HTTP_201_CREATED)
+        serializer = RecipeMinifiedSerializer(recipe)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete_obj(self, model, user, recipe):
-        if model.objects.filter(user=user, recipe=recipe).exists():
-            model.objects.get(user=user, recipe=recipe).delete()
+        obj = model.objects.filter(user=user, recipe=recipe)
+        if obj.exists():
+            obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
         return Response({
             'errors': 'Рецепт уже удален'
         }, status=status.HTTP_400_BAD_REQUEST)
@@ -112,3 +119,40 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 class CustomUserViewSet(UserViewSet):
     pagination_class = LimitPageNumberPagination
+
+    @action(methods=['get'], detail=True)
+    def subscribe(self, request, id=None):
+        user = request.user
+        subscriber = get_object_or_404(User, id=id)
+
+        if (Subscribe.objects.filter(user=user, subscriber=subscriber)
+                .exists() or user == subscriber):
+            return Response({
+                'errors': ('Вы уже подписаны на этого пользователя '
+                           'или подписываетесь на самого себя')
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        subscribe = Subscribe.objects.create(user=user, subscriber=subscriber)
+        subscribe.save()
+        data = {
+            'user': user,
+            'subscriber': subscriber
+        }
+        serializer = SubscribeSerializer(data, context={'request': request})
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @subscribe.mapping.delete
+    def del_subscribe(self, request, id=None):
+        user = request.user
+        subscriber = get_object_or_404(User, id=id)
+        subscribe = Subscribe.objects.filter(
+            user=user, subscriber=subscriber
+        )
+        if subscribe.exists():
+            subscribe.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        return Response({
+            'errors': 'Вы уже отписались'
+        }, status=status.HTTP_400_BAD_REQUEST)
