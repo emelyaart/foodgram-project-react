@@ -4,7 +4,7 @@ from rest_framework import serializers
 from users.models import CustomUser
 
 from .models import (Ingredient, IngredientAmount, Recipe, Tag,
-                     Favorite)
+                     Favorite, Cart)
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -48,16 +48,22 @@ class RecipeSerializer(serializers.ModelSerializer):
         read_only=True
     )
     is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
         fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
-                  'name', 'image', 'text', 'cooking_time')
+                  'is_in_shopping_cart', 'name', 'image', 'text',
+                  'cooking_time')
         depth = 1
 
     def get_is_favorited(self, obj):
         user = self.context.get('request').user
         return Favorite.objects.filter(user=user, recipe=obj).exists()
+
+    def get_is_in_shopping_cart(self, obj):
+        user = self.context.get('request').user
+        return Cart.objects.filter(user=user, recipe=obj).exists()
 
     def create(self, validated_data):
         image = validated_data.pop('image')

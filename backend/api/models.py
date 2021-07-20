@@ -18,9 +18,26 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
+    BLUE = '#4A61DD'
+    ORANGE = '#E26C2D'
+    GREEN = '#49B64E'
+    PURPLE = '#8775D2'
+    YELLOW = '#F9A62B'
+
+    COLOR_CHOICES = [
+        (BLUE, 'Синий'),
+        (ORANGE, 'Оранжевый'),
+        (GREEN, 'Зеленый'),
+        (PURPLE, 'Фиолетовый'),
+        (YELLOW, 'Желтый')
+    ]
     name = models.CharField('Название', max_length=100, unique=True)
     slug = models.SlugField('Слаг', unique=True)
-    color = models.CharField('Цветовой код', max_length=7)
+    color = models.CharField(
+        'Цветовой код',
+        max_length=7,
+        choices=COLOR_CHOICES
+    )
 
     def __str__(self):
         return self.name
@@ -48,7 +65,7 @@ class Recipe(models.Model):
         'Название',
         max_length=100
     )
-    image = models.ImageField('Картинка')
+    image = models.ImageField('Картинка', upload_to='recipes/')
     text = models.TextField('Текстовое описание')
     ingredients = models.ManyToManyField(
         Ingredient,
