@@ -116,6 +116,7 @@ class RecipeMinifiedSerializer(serializers.ModelSerializer):
 
 
 class SubscribeSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='subscriber.id')
     email = serializers.ReadOnlyField(source='subscriber.email')
     username = serializers.ReadOnlyField(source='subscriber.username')
     first_name = serializers.ReadOnlyField(source='subscriber.first_name')
@@ -137,7 +138,11 @@ class SubscribeSerializer(serializers.ModelSerializer):
     def get_recipes(self, obj):
         request = self.context.get('request')
         limit = request.GET.get('recipes_limit')
-        queryset = Recipe.objects.filter(author=obj.subscriber)[:limit]
+        queryset = Recipe.objects.filter(author=obj.subscriber)
+        if limit is not None:
+            queryset = Recipe.objects.filter(
+                author=obj.subscriber
+            )[:int(limit)]
         return RecipeMinifiedSerializer(queryset, many=True).data
 
     def get_recipes_count(self, obj):

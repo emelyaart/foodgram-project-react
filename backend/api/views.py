@@ -57,7 +57,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(methods=['get'], detail=True)
     def favorite(self, request, pk=None):
-        recipe = Recipe.objects.get(pk=pk)
+        recipe = self.get_object()
         user = request.user
 
         return self.add_obj(Favorite, user, recipe)
@@ -157,15 +157,15 @@ class CustomUserViewSet(UserViewSet):
 
     @action(
         methods=['get'],
-        detail=False,
-        pagination_class=LimitPageNumberPagination
+        detail=False
     )
     def subscriptions(self, request):
         user = request.user
-        subscribing = Subscribe.objects.filter(user=user)
+        queryset = Subscribe.objects.filter(user=user)
+        pages = self.paginate_queryset(queryset)
         serializer = SubscribeSerializer(
-            subscribing,
+            pages,
             many=True,
             context={'request': request}
         )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return self.get_paginated_response(serializer.data)
