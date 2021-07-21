@@ -1,23 +1,23 @@
-from rest_framework import viewsets, mixins, status
-from rest_framework.generics import get_object_or_404
-from rest_framework.response import Response
-from rest_framework.decorators import action
+from django.db.models import Exists, OuterRef
+from django.http import HttpResponse
 from djoser.views import UserViewSet
-from django.db.models import OuterRef, Exists
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from .models import Cart, Favorite, Recipe, Subscribe, Tag, Ingredient, User
-from .serializers import (SubscribeSerializer, TagSerializer,
-                          IngredientSerializer, RecipeSerializer,
-                          RecipeMinifiedSerializer)
-from .permissions import IsAuthorOrReadOnly, IsStaffOrReadOnly
 from .filters import IngredientSearchFilter, TagFilter
+from .mixins import BaseTagAndIngredientViewSet
+from .models import (Cart, Favorite, Ingredient, IngredientAmount, Recipe,
+                     Subscribe, Tag, User)
 from .paginations import LimitPageNumberPagination
-
-
-class BaseTagAndIngredientViewSet(mixins.ListModelMixin,
-                                  mixins.RetrieveModelMixin,
-                                  viewsets.GenericViewSet):
-    permission_classes = [IsStaffOrReadOnly]
+from .permissions import IsAuthorOrReadOnly
+from .serializers import (IngredientSerializer, RecipeMinifiedSerializer,
+                          RecipeSerializer, SubscribeSerializer, TagSerializer)
 
 
 class TagsViewSet(BaseTagAndIngredientViewSet):
@@ -37,7 +37,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     pagination_class = LimitPageNumberPagination
     filter_class = TagFilter
-    permission_classes = [IsAuthorOrReadOnly, IsStaffOrReadOnly]
+    permission_classes = [IsAuthorOrReadOnly]
 
     def perform_create(self, serializer):
         serializer.save(
@@ -55,7 +55,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         return Recipe.objects.all()
 
-    @action(methods=['get'], detail=True)
+    @action(detail=True, permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
@@ -69,7 +69,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         return self.delete_obj(Favorite, user, recipe)
 
-    @action(methods=['get'], detail=True)
+    @action(detail=True, permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
         user = request.user
         recipe = self.get_object()
@@ -82,6 +82,46 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = self.get_object()
 
         return self.delete_obj(Cart, user, recipe)
+
+    @action(detail=False, permission_classes=[IsAuthenticated])
+    def download_shopping_cart(self, request):
+        user = request.user
+        queryset = IngredientAmount.objects.filter(
+            Exists(Recipe.objects.filter(
+                Exists(Cart.objects.filter(
+                    user=user)))))
+        ingredients = {}
+        for q in queryset:
+            if q.ingredients.id not in ingredients:
+                ingredients[q.ingredients.id] = {
+                    'name': q.ingredients.name,
+                    'amount': q.amount,
+                    'measurement_unit': q.ingredients.measurement_unit
+                }
+            else:
+                ingredients[q.ingredients.id]['amount'] += q.amount
+
+        pdfmetrics.registerFont(TTFont('FiraSans', 'FiraSans.ttf', 'UTF-8'))
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = ('attachment; '
+                                           'filename="shopping_list.pdf"')
+        page = canvas.Canvas(response)
+        page.setFont('FiraSans', size=16)
+        page.drawString(200, 800, 'Список ингредиентов')
+        height = 750
+        i = 1
+        for item in ingredients.values():
+            page.drawString(
+                50,
+                height,
+                (f'{i}) { item["name"] } - {item["amount"]}, '
+                 f'{item["measurement_unit"]}')
+            )
+            height -= 25
+            i += 1
+        page.showPage()
+        page.save()
+        return response
 
     def add_obj(self, model, user, recipe):
         if model.objects.filter(user=user, recipe=recipe).exists():
@@ -120,7 +160,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class CustomUserViewSet(UserViewSet):
     pagination_class = LimitPageNumberPagination
 
-    @action(methods=['get'], detail=True)
+    @action(detail=True, permission_classes=[IsAuthenticated])
     def subscribe(self, request, id=None):
         user = request.user
         subscriber = get_object_or_404(User, id=id)
@@ -155,10 +195,7 @@ class CustomUserViewSet(UserViewSet):
             'errors': 'Вы уже отписались'
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(
-        methods=['get'],
-        detail=False
-    )
+    @action(detail=False, permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
         user = request.user
         queryset = Subscribe.objects.filter(user=user)

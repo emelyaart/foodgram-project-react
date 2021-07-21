@@ -1,10 +1,15 @@
-from django.db import models
 from django.contrib.auth import get_user_model
+from django.db import models
 
 User = get_user_model()
 
 
 class Ingredient(models.Model):
+
+    class Meta:
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
+
     name = models.CharField(
         'Название',
         max_length=100
@@ -32,6 +37,11 @@ class Tag(models.Model):
         (PURPLE, 'Фиолетовый'),
         (YELLOW, 'Желтый')
     ]
+
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+
     name = models.CharField('Название', max_length=100, unique=True)
     slug = models.SlugField('Слаг', unique=True)
     color = models.CharField(
@@ -45,6 +55,11 @@ class Tag(models.Model):
 
 
 class Subscribe(models.Model):
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE
@@ -57,6 +72,12 @@ class Subscribe(models.Model):
 
 
 class Recipe(models.Model):
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -80,9 +101,6 @@ class Recipe(models.Model):
     )
     cooking_time = models.IntegerField('Время приготовления')
 
-    class Meta:
-        ordering = ['id']
-
     def __str__(self):
         return self.name
 
@@ -100,6 +118,11 @@ class IngredientAmount(models.Model):
 
 
 class Favorite(models.Model):
+
+    class Meta:
+        verbose_name = 'Избранный'
+        verbose_name_plural = 'Избранные'
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE
@@ -112,9 +135,15 @@ class Favorite(models.Model):
 
 
 class Cart(models.Model):
+
+    class Meta:
+        verbose_name = 'Корзина'
+        verbose_name_plural = 'В корзине'
+
     user = models.ForeignKey(
         User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='in_cart'
     )
     recipe = models.ForeignKey(
         Recipe,

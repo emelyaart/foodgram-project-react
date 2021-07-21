@@ -1,8 +1,8 @@
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from .models import (Ingredient, IngredientAmount, Recipe, Subscribe, Tag,
-                     Favorite, Cart, User)
+from .models import (Cart, Favorite, Ingredient, IngredientAmount, Recipe,
+                     Subscribe, Tag, User)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -53,7 +53,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
                   'is_in_shopping_cart', 'name', 'image', 'text',
                   'cooking_time')
-        depth = 1
 
     def get_is_favorited(self, obj):
         user = self.context.get('request').user
@@ -64,38 +63,36 @@ class RecipeSerializer(serializers.ModelSerializer):
         return Cart.objects.filter(user=user, recipe=obj).exists()
 
     def create(self, validated_data):
+        print(validated_data)
         image = validated_data.pop('image')
         recipe = Recipe.objects.create(image=image, **validated_data)
-        data = self.context.get('request').data
-        ingredients_data = data.get('ingredients')
-        tags_data = data.get('tags')
+        ingredients_data = self.initial_data.get('ingredients')
+        tags_data = self.initial_data.get('tags')
 
         for tag_id in tags_data:
             recipe.tags.add(Tag.objects.get(pk=tag_id))
 
         for ingredient in ingredients_data:
-            ingredient_amount_obj = IngredientAmount.objects.create(
+            IngredientAmount.objects.create(
                 recipe=recipe,
                 ingredients_id=ingredient.get('id'),
                 amount=ingredient.get('amount')
             )
-            ingredient_amount_obj.save()
 
         return recipe
 
     def update(self, instance, validated_data):
-        data = self.context.get('request').data
         instance.image = validated_data.get('image', instance.image)
         instance.name = validated_data.get('name', instance.name)
         instance.text = validated_data.get('text', instance.text)
         instance.tags.clear()
         IngredientAmount.objects.filter(recipe=instance).all().delete()
-        tags_data = data.get('tags')
+        tags_data = self.initial_data.get('tags')
 
         for tag_id in tags_data:
             instance.tags.add(Tag.objects.get(pk=tag_id))
 
-        for ingredient in data.get('ingredients'):
+        for ingredient in self.initial_data.get('ingredients'):
             ingredient_amount_obj = IngredientAmount.objects.create(
                 recipe=instance,
                 ingredients_id=ingredient.get('id'),
