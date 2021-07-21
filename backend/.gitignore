@@ -149,4 +149,6 @@ dmypy.json
 static/
 posts/static/
 media/
-
+media_value/
+static_value/
+migrations/

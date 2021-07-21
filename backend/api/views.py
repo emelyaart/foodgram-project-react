@@ -90,7 +90,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             Exists(Recipe.objects.filter(
                 Exists(Cart.objects.filter(
                     user=user)))))
-        Cart.objects.filter(user=user).delete()
         ingredients = {}
         for q in queryset:
             if q.ingredients.id not in ingredients:
@@ -122,6 +121,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             i += 1
         page.showPage()
         page.save()
+        Cart.objects.filter(user=user).delete()
 
         return response
 
