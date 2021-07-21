@@ -15,7 +15,7 @@ from .mixins import BaseTagAndIngredientViewSet
 from .models import (Cart, Favorite, Ingredient, IngredientAmount, Recipe,
                      Subscribe, Tag, User)
 from .paginations import LimitPageNumberPagination
-from .permissions import IsAuthorOrReadOnly
+from .permissions import IsAuthorOrReadOnly, IsStaffOrReadOnly
 from .serializers import (IngredientSerializer, RecipeMinifiedSerializer,
                           RecipeSerializer, SubscribeSerializer, TagSerializer)
 
@@ -90,6 +90,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             Exists(Recipe.objects.filter(
                 Exists(Cart.objects.filter(
                     user=user)))))
+        Cart.objects.filter(user=user).delete()
         ingredients = {}
         for q in queryset:
             if q.ingredients.id not in ingredients:
@@ -121,6 +122,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             i += 1
         page.showPage()
         page.save()
+
         return response
 
     def add_obj(self, model, user, recipe):
@@ -159,6 +161,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 class CustomUserViewSet(UserViewSet):
     pagination_class = LimitPageNumberPagination
+    permission_classes = [IsStaffOrReadOnly]
 
     @action(detail=True, permission_classes=[IsAuthenticated])
     def subscribe(self, request, id=None):
