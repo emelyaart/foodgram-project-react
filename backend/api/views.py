@@ -134,11 +134,9 @@ class CustomUserViewSet(UserViewSet):
 
         subscribe = Subscribe.objects.create(user=user, subscriber=subscriber)
         subscribe.save()
-        data = {
-            'user': user,
-            'subscriber': subscriber
-        }
-        serializer = SubscribeSerializer(data, context={'request': request})
+        serializer = SubscribeSerializer(
+            subscribe, context={'request': request}
+        )
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -156,3 +154,18 @@ class CustomUserViewSet(UserViewSet):
         return Response({
             'errors': 'Вы уже отписались'
         }, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        methods=['get'],
+        detail=False,
+        pagination_class=LimitPageNumberPagination
+    )
+    def subscriptions(self, request):
+        user = request.user
+        subscribing = Subscribe.objects.filter(user=user)
+        serializer = SubscribeSerializer(
+            subscribing,
+            many=True,
+            context={'request': request}
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
