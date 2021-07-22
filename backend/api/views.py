@@ -86,20 +86,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         user = request.user
-        queryset = IngredientAmount.objects.filter(
-            Exists(Recipe.objects.filter(
-                Exists(Cart.objects.filter(
-                    user=user)))))
-        ingredients = {}
+        queryset = user.in_cart.all()
+        final_list = {}
         for q in queryset:
-            if q.ingredients.id not in ingredients:
-                ingredients[q.ingredients.id] = {
-                    'name': q.ingredients.name,
-                    'amount': q.amount,
-                    'measurement_unit': q.ingredients.measurement_unit
-                }
-            else:
-                ingredients[q.ingredients.id]['amount'] += q.amount
+            ingredients = IngredientAmount.objects.filter(recipe=q.recipe)
+            for i in ingredients:
+                name = i.ingredients.name
+                measurement_unit = i.ingredients.measurement_unit
+                amount = i.amount
+                if name not in final_list:
+                    final_list[name] = {
+                        'measurement_unit': measurement_unit,
+                        'amount': amount
+                    }
+                else:
+                    final_list[name]['amount'] += amount
 
         pdfmetrics.registerFont(TTFont('FiraSans', 'FiraSans.ttf', 'UTF-8'))
         response = HttpResponse(content_type='application/pdf')
@@ -110,12 +111,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         page.drawString(200, 800, 'Список ингредиентов')
         height = 750
         i = 1
-        for item in ingredients.values():
+
+        for name, data in final_list.items():
             page.drawString(
                 50,
                 height,
-                (f'{i}) { item["name"] } - {item["amount"]}, '
-                 f'{item["measurement_unit"]}')
+                (f'{i}) { name } - {data["amount"]}, '
+                 f'{data["measurement_unit"]}')
             )
             height -= 25
             i += 1
