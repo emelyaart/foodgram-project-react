@@ -9,8 +9,7 @@ from .models import (Cart, Favorite, Ingredient, IngredientAmount, Recipe,
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('email', 'id', 'username', 'first_name',
-                  'last_name')
+        fields = ('email', 'id', 'username', 'first_name', 'last_name')
 
 
 class TagSerializer(serializers.ModelSerializer):
