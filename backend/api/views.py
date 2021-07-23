@@ -88,12 +88,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
         queryset = user.in_cart.all()
         final_list = {}
-        for q in queryset:
-            ingredients = IngredientAmount.objects.filter(recipe=q.recipe)
-            for i in ingredients:
-                name = i.ingredients.name
-                measurement_unit = i.ingredients.measurement_unit
-                amount = i.amount
+        for cart_item in queryset:
+            ingredients = IngredientAmount.objects.filter(recipe=cart_item.recipe)
+            for ingredient_item in ingredients:
+                name = ingredient_item.ingredient.name
+                measurement_unit = ingredient_item.ingredient.measurement_unit
+                amount = ingredient_item.amount
                 if name not in final_list:
                     final_list[name] = {
                         'measurement_unit': measurement_unit,
