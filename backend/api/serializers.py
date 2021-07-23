@@ -1,5 +1,6 @@
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
+from rest_framework.generics import get_object_or_404
 
 from .models import (Cart, Favorite, Ingredient, IngredientAmount, Recipe,
                      Subscribe, Tag, User)
@@ -25,10 +26,10 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientAmountSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='ingredients.id')
-    name = serializers.ReadOnlyField(source='ingredients.name')
+    id = serializers.ReadOnlyField(source='ingredient.id')
+    name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
-        source='ingredients.measurement_unit'
+        source='ingredient.measurement_unit'
     )
 
     class Meta:
@@ -63,14 +64,13 @@ class RecipeSerializer(serializers.ModelSerializer):
         return Cart.objects.filter(user=user, recipe=obj).exists()
 
     def create(self, validated_data):
-        print(validated_data)
         image = validated_data.pop('image')
         recipe = Recipe.objects.create(image=image, **validated_data)
         ingredients_data = self.initial_data.get('ingredients')
         tags_data = self.initial_data.get('tags')
 
         for tag_id in tags_data:
-            recipe.tags.add(Tag.objects.get(pk=tag_id))
+            recipe.tags.add(get_object_or_404(Tag, pk=tag_id))
 
         for ingredient in ingredients_data:
             IngredientAmount.objects.create(
@@ -90,7 +90,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         tags_data = self.initial_data.get('tags')
 
         for tag_id in tags_data:
-            instance.tags.add(Tag.objects.get(pk=tag_id))
+            instance.tags.add(get_object_or_404(Tag, pk=tag_id))
 
         for ingredient in self.initial_data.get('ingredients'):
             ingredient_amount_obj = IngredientAmount.objects.create(

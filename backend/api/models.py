@@ -6,10 +6,6 @@ User = get_user_model()
 
 class Ingredient(models.Model):
 
-    class Meta:
-        verbose_name = 'Ингредиент'
-        verbose_name_plural = 'Ингредиенты'
-
     name = models.CharField(
         'Название',
         max_length=100
@@ -18,6 +14,10 @@ class Ingredient(models.Model):
         'Единица измерения',
         max_length=10
     )
+
+    class Meta:
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
 
     def __str__(self):
         return self.name
@@ -38,10 +38,6 @@ class Tag(models.Model):
         (YELLOW, 'Желтый')
     ]
 
-    class Meta:
-        verbose_name = 'Тег'
-        verbose_name_plural = 'Теги'
-
     name = models.CharField('Название', max_length=100, unique=True)
     slug = models.SlugField('Слаг', unique=True)
     color = models.CharField(
@@ -50,15 +46,15 @@ class Tag(models.Model):
         choices=COLOR_CHOICES
     )
 
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+
     def __str__(self):
         return self.name
 
 
 class Subscribe(models.Model):
-
-    class Meta:
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
 
     user = models.ForeignKey(
         User,
@@ -70,13 +66,15 @@ class Subscribe(models.Model):
         related_name='subscribing'
     )
 
-
-class Recipe(models.Model):
-
     class Meta:
         ordering = ['id']
-        verbose_name = 'Рецепт'
-        verbose_name_plural = 'Рецепты'
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        models.UniqueConstraint(fields=['user', 'subscriber'],
+                                name='unique subscribe')
+
+
+class Recipe(models.Model):
 
     author = models.ForeignKey(
         User,
@@ -99,14 +97,19 @@ class Recipe(models.Model):
         Tag,
         verbose_name='Теги',
     )
-    cooking_time = models.IntegerField('Время приготовления')
+    cooking_time = models.PositiveSmallIntegerField('Время приготовления')
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
 
     def __str__(self):
         return self.name
 
 
 class IngredientAmount(models.Model):
-    ingredients = models.ForeignKey(
+    ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
     )
@@ -114,14 +117,14 @@ class IngredientAmount(models.Model):
         Recipe,
         on_delete=models.CASCADE
     )
-    amount = models.SmallIntegerField('Количество')
+    amount = models.PositiveSmallIntegerField('Количество')
+
+    class Meta:
+        verbose_name = 'Количество ингридиента'
+        verbose_name_plural = 'Количество ингридиентов'
 
 
 class Favorite(models.Model):
-
-    class Meta:
-        verbose_name = 'Избранный'
-        verbose_name_plural = 'Избранные'
 
     user = models.ForeignKey(
         User,
@@ -133,12 +136,13 @@ class Favorite(models.Model):
         related_name='favorites'
     )
 
+    class Meta:
+        ordering = ['id']
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
+
 
 class Cart(models.Model):
-
-    class Meta:
-        verbose_name = 'Корзина'
-        verbose_name_plural = 'В корзине'
 
     user = models.ForeignKey(
         User,
@@ -150,3 +154,8 @@ class Cart(models.Model):
         on_delete=models.CASCADE,
         related_name='in_cart'
     )
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
