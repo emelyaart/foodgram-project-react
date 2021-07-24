@@ -48,12 +48,28 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        if self.request.GET.get('is_favorited'):
-            return self.filter_obj(Favorite, user)
-        elif self.request.GET.get('is_in_shopping_cart'):
-            return self.filter_obj(Cart, user)
+        if user.is_anonymous:
+            return Recipe.objects.all()
 
-        return Recipe.objects.all()
+        queryset = Recipe.objects.annotate(
+            is_favorited=Exists(
+                Favorite.objects.filter(
+                    user=user, recipe_id=OuterRef('pk')
+                )
+            ),
+            is_in_shopping_cart=Exists(
+                Cart.objects.filter(
+                    user=user, recipe_id=OuterRef('pk')
+                )
+            )
+        )
+
+        if self.request.GET.get('is_favorited'):
+            return queryset.filter(is_favorited=True)
+        elif self.request.GET.get('is_in_shopping_cart'):
+            return queryset.filter(is_in_shopping_cart=True)
+
+        return queryset
 
     @action(detail=True, permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
@@ -89,7 +105,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         queryset = user.in_cart.all()
         final_list = {}
         for cart_item in queryset:
-            ingredients = IngredientAmount.objects.filter(recipe=cart_item.recipe)
+            ingredients = IngredientAmount.objects.filter(
+                recipe=cart_item.recipe
+            )
             for ingredient_item in ingredients:
                 name = ingredient_item.ingredient.name
                 measurement_unit = ingredient_item.ingredient.measurement_unit
@@ -150,15 +168,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response({
             'errors': 'Рецепт уже удален'
         }, status=status.HTTP_400_BAD_REQUEST)
-
-    def filter_obj(self, model, user):
-        return Recipe.objects.annotate(
-            is_filtered=Exists(
-                model.objects.filter(
-                    user=user, recipe_id=OuterRef('pk')
-                )
-            )
-        ).filter(is_filtered=True)
 
 
 class CustomUserViewSet(UserViewSet):

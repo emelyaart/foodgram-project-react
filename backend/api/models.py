@@ -58,20 +58,22 @@ class Subscribe(models.Model):
 
     user = models.ForeignKey(
         User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь'
     )
     subscriber = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='subscribing'
+        related_name='subscribing',
+        verbose_name='Подписчик'
     )
 
     class Meta:
         ordering = ['id']
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
-        models.UniqueConstraint(fields=['user', 'subscriber'],
-                                name='unique subscribe')
+        constraints = [models.UniqueConstraint(fields=['user', 'subscriber'],
+                                               name='unique subscribe')]
 
 
 class Recipe(models.Model):
@@ -112,10 +114,12 @@ class IngredientAmount(models.Model):
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
+        verbose_name='Ингридиент'
     )
     recipe = models.ForeignKey(
         Recipe,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт'
     )
     amount = models.PositiveSmallIntegerField('Количество')
 
@@ -128,12 +132,14 @@ class Favorite(models.Model):
 
     user = models.ForeignKey(
         User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='favorites'
+        related_name='favorites',
+        verbose_name='Рецепт'
     )
 
     class Meta:
@@ -147,12 +153,14 @@ class Cart(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='in_cart'
+        related_name='in_cart',
+        verbose_name='Пользователь'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='in_cart'
+        related_name='in_cart',
+        verbose_name='Рецепт'
     )
 
     class Meta:

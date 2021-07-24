@@ -2,8 +2,7 @@ from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 
-from .models import (Cart, Favorite, Ingredient, IngredientAmount, Recipe,
-                     Subscribe, Tag, User)
+from .models import Ingredient, IngredientAmount, Recipe, Subscribe, Tag, User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -58,13 +57,15 @@ class RecipeSerializer(serializers.ModelSerializer):
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
-        return Favorite.objects.filter(user=user, recipe=obj).exists()
+
+        return obj.is_favorited
 
     def get_is_in_shopping_cart(self, obj):
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
-        return Cart.objects.filter(user=user, recipe=obj).exists()
+
+        return obj.is_in_shopping_cart
 
     def create(self, validated_data):
         image = validated_data.pop('image')
@@ -143,6 +144,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
             queryset = Recipe.objects.filter(
                 author=obj.subscriber
             )[:int(limit)]
+
         return RecipeMinifiedSerializer(queryset, many=True).data
 
     def get_recipes_count(self, obj):
