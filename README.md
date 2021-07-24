@@ -28,13 +28,13 @@ touch .env
 ```
 4. Добавьте настройки выполнив команды:
 ```bash
-echo "DJANGO_SECRET_KEY=your_secret_key" >> env && # Здесь нужно ввести секретный код
-echo "DB_ENGINE=django.db.backends.postgresql_psycopg2" >> env &&
-echo "DB_NAME=postgres" >> env &&
-echo "POSTGRES_USER=postgres" >> env &&
-echo "POSTGRES_PASSWORD=your_password" >> env && #Здесь необходимо ввести свой пароль
-echo "DB_HOST=db" >> env &&
-echo "DB_PORT=5432" >> env
+echo "DJANGO_SECRET_KEY=your_secret_key" >> .env && # Здесь нужно ввести секретный код
+echo "DB_ENGINE=django.db.backends.postgresql_psycopg2" >> .env &&
+echo "DB_NAME=postgres" >> .env &&
+echo "POSTGRES_USER=postgres" >> .env &&
+echo "POSTGRES_PASSWORD=your_password" >> .env && #Здесь необходимо ввести свой пароль
+echo "DB_HOST=db" >> .env &&
+echo "DB_PORT=5432" >> .env
 ```
 > Для генерации случайного секретного кода можно воспользоваться сервисом [Djecrety.ir](https://djecrety.ir/)
 
