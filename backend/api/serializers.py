@@ -82,6 +82,8 @@ class RecipeSerializer(serializers.ModelSerializer):
                 ingredient_id=ingredient.get('id'),
                 amount=ingredient.get('amount')
             )
+        recipe.is_favorited = False
+        recipe.is_in_shopping_cart = False
 
         return recipe
 
@@ -99,10 +101,13 @@ class RecipeSerializer(serializers.ModelSerializer):
         for ingredient in self.initial_data.get('ingredients'):
             ingredient_amount_obj = IngredientAmount.objects.create(
                 recipe=instance,
-                ingredients_id=ingredient.get('id'),
+                ingredient_id=ingredient.get('id'),
                 amount=ingredient.get('amount')
             )
             ingredient_amount_obj.save()
+
+        instance.is_favorited = instance.is_favorited
+        instance.is_in_shopping_cart = instance.is_in_shopping_cart
 
         return instance
 
