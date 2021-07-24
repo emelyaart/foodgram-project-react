@@ -14,9 +14,7 @@ services:
     env_file: 
       - ../backend/.env
   backend:
-    build: 
-      context: ../backend/
-      dockerfile: Dockerfile
+    image: emelyaart/foodgram-project-react 
     restart: always
     volumes: 
       - static_value:/code/static/
