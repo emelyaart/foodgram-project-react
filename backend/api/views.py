@@ -102,23 +102,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         user = request.user
-        queryset = user.in_cart.all()
         final_list = {}
-        for cart_item in queryset:
-            ingredients = IngredientAmount.objects.filter(
-                recipe=cart_item.recipe
-            )
-            for ingredient_item in ingredients:
-                name = ingredient_item.ingredient.name
-                measurement_unit = ingredient_item.ingredient.measurement_unit
-                amount = ingredient_item.amount
-                if name not in final_list:
-                    final_list[name] = {
-                        'measurement_unit': measurement_unit,
-                        'amount': amount
-                    }
-                else:
-                    final_list[name]['amount'] += amount
+        ingredients = IngredientAmount.objects.filter(
+            recipe__in_cart__user=user
+        )
+        for ingredient_item in ingredients:
+            name = ingredient_item.ingredient.name
+            measurement_unit = ingredient_item.ingredient.measurement_unit
+            amount = ingredient_item.amount
+            if name not in final_list:
+                final_list[name] = {
+                    'measurement_unit': measurement_unit,
+                    'amount': amount
+                }
+            else:
+                final_list[name]['amount'] += amount
 
         pdfmetrics.registerFont(TTFont('FiraSans', 'FiraSans.ttf', 'UTF-8'))
         response = HttpResponse(content_type='application/pdf')
