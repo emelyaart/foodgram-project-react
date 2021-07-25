@@ -9,7 +9,6 @@ services:
   db:
     image: postgres:13.3
     volumes:
-      - ../data/:/usr/share/postgresql/data/
       - postgres_data:/var/lib/postgresql/data/
     env_file: 
       - ./.env
