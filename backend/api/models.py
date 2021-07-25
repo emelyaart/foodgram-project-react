@@ -102,7 +102,7 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField('Время приготовления')
 
     class Meta:
-        ordering = ['id']
+        ordering = ['-id']
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
