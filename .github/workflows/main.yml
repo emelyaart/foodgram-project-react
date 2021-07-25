@@ -37,7 +37,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           stack_file_name: docker-compose.yml
           script: |
-            cd foodgram-project-react
+            cd /home/{{ secrets.USER }}/foodgram-project-react/
             sudo docker-compose stop
             sudo docker-compose rm backend
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
