@@ -12,8 +12,8 @@
 
 ## Установка сервиса на сервер.
 
-### ВАЖНО! Для работы сервиса необходим заранее установленный [Docker](https://www.docker.com)
-Если Docker установлен, можно начать.
+### ВАЖНО! Для работы сервиса необходим заранее установленный [Docker](https://www.docker.com) и [docker-compose](https://docs.docker.com/compose/install/)
+Если Docker и docker-compose установлены, можно продолжить.
 
 1. Клонируйте репозиторий к себе на сервер командой:
 ```bash
@@ -45,7 +45,7 @@ cd ../infra/
 ```
 6. Запустите создание контейнеров командой:
 ```bash
-docker compose up -d
+docker-compose up -d --build
 ```
 7. Через некоторое время вы увидите примерно такой вывод:
  ```bash
@@ -56,4 +56,18 @@ docker compose up -d
  ⠿ Container infra_db_1        Started                                     3.6s
  ⠿ Container infra_backend_1   Started                                     6.7s
 ```
+8. Далее необходимо произвести миграции и собрать статику, для этого последовательно выполните команды:
+```bash
+docker-compose exec backend python manage.py makemigrations
+docker-compose exec backend python manage.py migrate --no-input
+docker-compose exec backend python manage.py collectstatic --no-input
+```
+9. Создаем суперпользователя:
+```bash
+docker-compose exec backend python manage.py createsuperuser
+```
+И следуйте указаниям системы.
+
 На этом сборка завершена, сервис запущен и доступен по адресу your_domain.com/, либо localhost/ если это локальный сервер.
+
+Панель администратора доступна по адресу your_domain.com/admin/, либо localhost/admin/ если это локальный сервер.
