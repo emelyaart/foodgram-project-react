@@ -1,8 +1,13 @@
 # Foodgram - Продуктовый помощник
+
+
+![master](https://github.com/emelyaart/foodgram-project-react/actions/workflows/main.yml/badge.svg)
+
 Проект сервиса публикации кулинарных рецептов.
 > Демо проекта: [Продуктовый помощник](http://emelyaart.ru)
 > 
 > Панель администратора (admin@admin.com:Admin321Admin): [находится здесь](http://emelyaart.ru/admin/)
+
 
 ## Ключевые возможности сервиса:
 1. Регистрация пользователей.
