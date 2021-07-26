@@ -15,6 +15,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         user = self.context.get('request').user
+        if user.is_anonymous:
+            return False
         return Subscribe.objects.filter(
             user=user, subscriber=obj.id
         ).exists()
@@ -76,10 +78,21 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         return obj.is_in_shopping_cart
 
+    def validate(self, data):
+        ingredients = self.initial_data.get('ingredients')
+        for ingredient_item in ingredients:
+            if ingredient_item['amount'] < 0:
+                raise serializers.ValidationError(
+                    'The amount must not be negative'
+                )
+        data['ingredients'] = ingredients
+
+        return data
+
     def create(self, validated_data):
         image = validated_data.pop('image')
+        ingredients_data = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(image=image, **validated_data)
-        ingredients_data = self.initial_data.get('ingredients')
         tags_data = self.initial_data.get('tags')
 
         for tag_id in tags_data:
