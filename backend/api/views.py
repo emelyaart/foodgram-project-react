@@ -17,7 +17,8 @@ from .models import (Cart, Favorite, Ingredient, IngredientAmount, Recipe,
 from .paginations import LimitPageNumberPagination
 from .permissions import IsAuthorOrReadOnly, IsStaffOrReadOnly
 from .serializers import (IngredientSerializer, RecipeMinifiedSerializer,
-                          RecipeSerializer, SubscribeSerializer, TagSerializer)
+                          RecipeSerializer, SubscribeSerializer, TagSerializer,
+                          UserSerializer)
 
 
 class TagsViewSet(BaseTagAndIngredientViewSet):
@@ -171,6 +172,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class CustomUserViewSet(UserViewSet):
     pagination_class = LimitPageNumberPagination
     permission_classes = [IsStaffOrReadOnly]
+    serializer_class = UserSerializer
 
     @action(detail=True, permission_classes=[IsAuthenticated])
     def subscribe(self, request, id=None):
