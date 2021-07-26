@@ -10,7 +10,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .filters import IngredientSearchFilter, TagFilter
+from .filters import IngredientSearchFilter, TagAndAuthorFilter
 from .mixins import BaseTagAndIngredientViewSet
 from .models import (Cart, Favorite, Ingredient, IngredientAmount, Recipe,
                      Subscribe, Tag, User)
@@ -37,7 +37,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     pagination_class = LimitPageNumberPagination
-    filter_class = TagFilter
+    filter_class = TagAndAuthorFilter
     permission_classes = [IsAuthorOrReadOnly]
 
     def perform_create(self, serializer):
