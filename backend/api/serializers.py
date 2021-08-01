@@ -1,6 +1,5 @@
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-from rest_framework.generics import get_object_or_404
 
 from .models import Ingredient, IngredientAmount, Recipe, Subscribe, Tag, User
 
@@ -95,9 +94,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients_data = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(image=image, **validated_data)
         tags_data = self.initial_data.get('tags')
-
-        for tag_id in tags_data:
-            recipe.tags.add(get_object_or_404(Tag, pk=tag_id))
+        recipe.tags.set(tags_data)
 
         for ingredient in ingredients_data:
             IngredientAmount.objects.create(
@@ -118,11 +115,9 @@ class RecipeSerializer(serializers.ModelSerializer):
             'cooking_time', instance.cooking_time
         )
         instance.tags.clear()
-        IngredientAmount.objects.filter(recipe=instance).all().delete()
         tags_data = self.initial_data.get('tags')
-
-        for tag_id in tags_data:
-            instance.tags.add(get_object_or_404(Tag, pk=tag_id))
+        instance.tags.set(tags_data)
+        IngredientAmount.objects.filter(recipe=instance).all().delete()
 
         for ingredient in validated_data.get('ingredients'):
             ingredient_amount_obj = IngredientAmount.objects.create(
