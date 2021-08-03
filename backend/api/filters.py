@@ -8,10 +8,6 @@ class IngredientSearchFilter(SearchFilter):
     search_param = 'name'
 
 
-class RecipeSearchFilter(SearchFilter):
-    search_param = 'author'
-
-
 class TagAndAuthorFilter(FilterSet):
     tags = filters.AllValuesMultipleFilter(
         field_name='tags__slug'

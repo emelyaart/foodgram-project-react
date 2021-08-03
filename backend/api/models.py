@@ -143,7 +143,7 @@ class Favorite(models.Model):
     )
 
     class Meta:
-        ordering = ['id']
+        ordering = ['-id']
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные'
 
@@ -164,6 +164,6 @@ class Cart(models.Model):
     )
 
     class Meta:
-        ordering = ['id']
+        ordering = ['-id']
         verbose_name = 'Корзина'
         verbose_name_plural = 'В корзине'
